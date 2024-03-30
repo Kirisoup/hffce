@@ -1,5 +1,6 @@
 using System;
 using BepInEx;
+using Timer;
 
 namespace oobpercent
 {
@@ -39,7 +40,7 @@ namespace oobpercent
         // if toggles off, everything (beside the toggler itself) is expected to get killed
         // the run becomes invalid if the toggle state is changed
         //
-        // Accepted parameters:
+        // Accepted arguments:
         //   `on` and `1`
         //   `off` and `0`
         //   `toggle` and `t`
@@ -78,14 +79,8 @@ namespace oobpercent
 
             bool changed = enabledOOB != oldToggleState;
 
-            // perform actions if enabledOOB is changed
-            if (changed)
-            {
-                OOB.LevelInvalid();
-
-                if (enabledOOB) OOB.InitLevelInfo();
-                else OOB.ResetLevelInfo();
-            }
+            // mark run as cheated if enabledOOB is changed
+            if (changed && timerLoaded) FindObjectOfType<Speedrun>().SetInvalidType(InvalidType.Cheated);
 
             print($"{helpClr}oob% mode:</color> " + 
                 (enabledOOB ? "on" : "off") + // on/off state
