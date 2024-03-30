@@ -1,6 +1,7 @@
 using System;
 using BepInEx;
 using Timer;
+using System.Reflection;
 
 namespace oobpercent
 {
@@ -80,8 +81,8 @@ namespace oobpercent
             bool changed = enabledOOB != oldToggleState;
 
             // mark run as cheated if enabledOOB is changed
-            if (changed && timerLoaded) FindObjectOfType<Speedrun>().SetInvalidType(InvalidType.Cheated);
-
+            if (changed && timerLoaded) isCheated = true;
+            
             print($"{helpClr}oob% mode:</color> " + 
                 (enabledOOB ? "on" : "off") + // on/off state
                 (changed ? " <#ff0088>(Changed!)</color>" : null)); // If toggle state is changed, show a magenta "(Changed)" string after the on/off state

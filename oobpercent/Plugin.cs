@@ -19,8 +19,6 @@ namespace oobpercent
 
             Cmds.RegCmds();
 
-            print($"timerLoaded {timerLoaded}");
-
             // only patch timer if it is found
             if (timerLoaded) harmony.PatchAll(typeof(TimerInteg));
         }
@@ -41,8 +39,15 @@ namespace oobpercent
             {
                 if (Speedrun.invalid) return;
 
-                if (isLevelInvalid) GUI.Label(new Rect(300f, 80f, Screen.width - 20, Screen.height - 20),
-                    "Invalid: level doesn't satisfy the requirements for oob%",
+                if (isCheated) InvalidWarning("(oob%) Toggled. Restart level to take effect");
+
+                else if (isLevelInvalid) InvalidWarning("(oob%) level doesn't satisfy the requirements");
+            }
+
+            static void InvalidWarning(string warning)
+            {
+                GUI.Label(new Rect(300f, 80f, Screen.width - 20, Screen.height - 20),
+                    "Invalid：" + warning,
                     new() { fontSize = 30, normal = { textColor = Color.red } });
             }
         }
@@ -52,8 +57,15 @@ namespace oobpercent
             // only add my own gui if plcc timer is not present
             if (timerLoaded) return;
 
-            if (isLevelInvalid) GUI.Label(new Rect(20f, 20f, Screen.width - 20, Screen.height - 20),
-                "Invalid: level doesn't satisfy the requirements for oob%",
+            if (isCheated) InvalidWarning("(oob%) Toggled. Restart level to take effect");
+
+            else if (isLevelInvalid) InvalidWarning("(oob%) level doesn't satisfy the requirements");
+        }
+
+        static void InvalidWarning(string warning)
+        {
+            GUI.Label(new Rect(20f, 20f, Screen.width - 20, Screen.height - 20),
+                "Invalid：" + warning,
                 new() { fontSize = 30, normal = { textColor = Color.red } });
         }
 
@@ -89,17 +101,18 @@ namespace oobpercent
         // FIXME: set it to false before releasing
         static bool __(string msg = null)
         {
-            bool debugMode = true;
+            bool debugMode = false;
 
-            if (!debugMode)
-            return false;
+            if (debugMode && msg is not null) print(msg);
 
-            if (msg is not null) print(msg);
-            return true;
+            return debugMode;
         }
 
         // represents whether if the level satisfy the requirements of oob%
         public static bool isLevelInvalid;
+
+        // represents whether if the player has toggled oob% during a run
+        public static bool isCheated;
 
         // represents whether is there any passzone found
         public static bool isPasszoneFound;

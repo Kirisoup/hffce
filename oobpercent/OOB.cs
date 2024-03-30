@@ -49,6 +49,7 @@ namespace oobpercent
             {
                 /*DEBUG*/__("@ reset!");
                 isLevelInvalid = false;
+                isCheated = false;
                 isPasszoneFound = false;
                 spawnPos = Vector3.zero;
                 boundZoneCandidates = new();
