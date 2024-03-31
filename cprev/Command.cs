@@ -3,7 +3,7 @@ using BepInEx;
 using Timer;
 using System.Reflection;
 
-namespace oobpercent
+namespace cprev
 {
     public partial class Plugin
     {
@@ -12,12 +12,9 @@ namespace oobpercent
             public static void RegCmds()
             {
                 // Hot toggle oob% on/off
-                Soup.Regcmds.ToShell("oobmode", "oob", new Action<string>(Toggler), 
-                    "Setting oob% mode on/off", 
+                Soup.Regcmds.ToShell("cprevmode", "cpr", new Action<string>(Toggler), 
+                    "Setting cp% reversed mode on/off", 
                     "<on(1), off(0), toggle(t), query(q)>");
-
-                /*DEBUG*/if (__()) Soup.Regcmds.ToShell("_find", "", new Action(OOB.InitLevelInfo));
-                /*DEBUG*/if (__()) Soup.Regcmds.ToShell("_human", "", new Action(OOB.InitPlayerInfo));
             }
 
             // Helper method (only used in Toggler())
@@ -25,7 +22,7 @@ namespace oobpercent
             {
                 if (badSyntax)
                 print("Command syntax error" + (error.IsNullOrWhiteSpace() ? null : ": " + error) + newline +
-                    helpClr + Soup.Regcmds.description_["oobmode"] + "</color>"
+                    helpClr + Soup.Regcmds.description_["cprevmode"] + "</color>"
                 );
 
                 return badSyntax;
@@ -54,20 +51,20 @@ namespace oobpercent
 
             if (Cmds.SyntaxError("Too many parameters", vals.Length != 1)) return;
 
-            bool oldToggleState = enabledOOB;
+            bool oldToggleState = enabledCPR;
 
             switch (vals[0])
             {
                 case "on": case "1":
-                    enabledOOB = true;
+                    enabledCPR = true;
                     break;
 
                 case "off": case "0":
-                    enabledOOB = false;
+                    enabledCPR = false;
                     break;
 
                 case "toggle": case "t":
-                    enabledOOB = !enabledOOB;
+                    enabledCPR = !enabledCPR;
                     break;
 
                 case "query": case "q":
@@ -78,13 +75,10 @@ namespace oobpercent
                     return;
             }
 
-            bool changed = enabledOOB != oldToggleState;
-
-            // mark run as cheated if enabledOOB is changed
-            if (changed) isCheated = true;
+            bool changed = enabledCPR != oldToggleState;
             
-            print($"{helpClr}oob% mode:</color> " + 
-                (enabledOOB ? "on" : "off") + // on/off state
+            print($"{helpClr}cp% reversed mode:</color> " + 
+                (enabledCPR ? "on" : "off") + // on/off state
                 (changed ? " <#ff0088>(Changed!)</color>" : null)); // If toggle state is changed, show a magenta "(Changed)" string after the on/off state
         }
     }
