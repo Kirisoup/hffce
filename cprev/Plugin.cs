@@ -1,6 +1,9 @@
 ﻿using BepInEx;
 using HarmonyLib;
+using HumanAPI;
+using Multiplayer;
 using Timer;
+using UnityEngine;
 
 namespace cprev
 {
@@ -9,9 +12,9 @@ namespace cprev
     [BepInProcess("Human.exe")]
     public partial class Plugin : BaseUnityPlugin
     {
-        public Harmony harmony;
+        Harmony harmony;
 
-        public void Start()
+        void Start()
         {
             harmony = Harmony.CreateAndPatchAll(typeof(CpRev), "com.kirisoup.hff.cprev");
 
@@ -20,66 +23,127 @@ namespace cprev
             Cmds.RegCmds();
         }
 
-        [HarmonyPatch(typeof(Game), "EnterCheckpoint")]
-        class CpRev
+        void OnDestroy() => harmony.UnpatchSelf();
+
+        void OnGUI()
         {
-            static bool isCpLarger;
-            static int previousCp = 0;
+            if (!cpMissed) return;
 
-            static void Prefix(ref int checkpoint)
+            if (timerLoaded && Timer.Timer.timerOpened) { if(!Speedrun.invalid) TimerInvalidWarning("Missed Checkpoint"); }
+
+            else FallbackInvalidWarning("(cp%rev) Missed Checkpoint");
+        }
+
+        static void TimerInvalidWarning(string warning) => InvalidWarning(warning, new(300f, 80f));
+        static void FallbackInvalidWarning(string warning) => InvalidWarning(warning, new(20f, 20f));
+
+        static void InvalidWarning(string warning, Vector2 pos)
+        {
+            GUI.Label(new Rect(pos.x, pos.y, Screen.width - 20, Screen.height - 20),
+                "Invalid：" + warning,
+                new() { fontSize = 30, normal = { textColor = Color.red } });
+        }
+
+
+        static class CpRev
+        {
+            [HarmonyPatch(typeof(Game), "EnterCheckpoint")]
+            [HarmonyPrefix]
+            static bool EnterCheckpoint(ref int checkpoint)
             {
-                if (!enabledCPR) return;
+                if (!enabledCPR) return true;
 
-                if (Game.currentLevel.nonLinearCheckpoints) return;
+                if (Game.currentLevel.nonLinearCheckpoints) return true;
                 
                 // store #cp before entering checkpoint
-                previousCp = Game.instance.currentCheckpointNumber;
+                int prevcp = Game.instance.currentCheckpointNumber;
 
-                // do not execute cprev logic if previousCp is 0 (spawnpoint) or if #cp is not changed
-                if (previousCp == 0 || previousCp == checkpoint) return;
+                // do not execute cprev logic if #cp is not changed
+                if (prevcp == checkpoint) return true;
 
-                // if triggered cp is smaller than previousCp, modify the level #cp to 0 so that it can be updated to the new smaller #cp
+                // if triggered cp is larger than prevcp, and prevcp is not 0 (i.e. is not spawnpoint), prevent cp from loading
+                else if (checkpoint > prevcp && prevcp != 0) return false;
+
+                // if triggered cp is smaller than prevcp, modify the level #cp to 0 so that it can be updated to the new smaller #cp
                 // - don't worry, the EnterCheckpoint event will override the #cp to newCp
-                // I know this is hacky, but this avoids rewritting the entire EnterCheckpoint event
-                if (checkpoint < previousCp) Game.instance.currentCheckpointNumber = 0;
+                // this avoids rewritting the entire EnterCheckpoint event
+                Game.instance.currentCheckpointNumber = 0;
 
-                // if triggered cp is larger than previousCp, modify the level #cp to super large so that it can't be updated to the new larger #cp
-                // - this new #cp will not be overrided
-                // set isCpLarger to tell the postfix method to do its job
-                else { isCpLarger = true; Game.instance.currentCheckpointNumber = int.MaxValue; }
+                // validate if checkpoints are skipped
+                CPValidation(prevcp, checkpoint);
+
+                return true;
             }
 
-            static void Postfix()
+            [HarmonyPatch(typeof(Game), "Fall")]
+            [HarmonyPrefix]
+            static void Fall()
             {
-                if (!enabledCPR) return;
-                if (!isCpLarger) return;
-
-                // if isCpLarger (where level #cp is modified to a super large number), fix the level #cp back to normal :3
-                Game.instance.currentCheckpointNumber = previousCp;
-
-                // reset
-                isCpLarger = false;
+                // validate if checkpoints are skipped when finished a level
+                if (Game.instance.passedLevel) CPValidation(Game.instance.currentCheckpointNumber);
             }
+
+            // reset cpMissed state after exiting to menu (singleplayer)
+            [HarmonyPatch(typeof(Game), "AfterUnload")]
+            [HarmonyPostfix]
+            static void AfterUnload() => cpMissed = false;
+
+            // reset cpMissed state after exiting to lobby (multiplayer)
+            [HarmonyPatch(typeof(NetGame), "ServerLoadLobby")]
+            [HarmonyPostfix]
+            static void ServerLoadLobby() => cpMissed = false;
+        }
+
+        public static void CPValidation(int prevcp, int? newcp = null)
+        {
+            // validation on finished level
+            if (newcp is null && prevcp != 1) goto invalid;
+
+            WorkshopItemSource lvltype = Game.instance.currentLevelType;
+            int lvlnum = Game.instance.currentLevelNumber;
+
+            bool buitin = lvltype == WorkshopItemSource.BuiltIn;
+            bool editorpick = lvltype == WorkshopItemSource.EditorPick;
+
+            bool dark = buitin && lvlnum == 9;
+            bool powerplant = buitin && lvlnum == 7;
+
+            // normal case: new cp should be one checkpoint before previous cp
+            if (newcp == prevcp - 1) return;
+
+            // cp6 in dark is skipped
+            // cp10~7 are just alternate route to cp6~2, both routes are optional in normal cp%, and in cprev cp10~7 are unobtainable
+            // i.e. the checkpoint after cp11 is cp5
+            if (dark && prevcp == 11 && newcp == 5) return;
+            
+            // if starting from spawnpoint
+            if (prevcp == 0)
+            {
+                // normal case: the first cp to trigger should be the last cp
+                if (newcp == Game.currentLevel.checkpoints.Length - 1) return;
+
+                // cp14~11 are skipped in powerplant, as they are skipped in normal cp% anyway
+                // i.e. the first cp to hit in powerplant is cp10
+                if (powerplant && newcp == 10) return;
+
+                // cp24~21 are skipped in dark (they are just different combinations of batteries and cable, and are unobtainable in cprev)
+                // i.e. the first cp to hit in dark is cp20
+                if (dark && newcp == 20) return;
+            }
+
+            invalid: cpMissed = true;
         }
 
         static class TimerInteg
         {
             [HarmonyPatch(typeof(Speedrun), "SetInvalidType")]
             [HarmonyPrefix]
-            // It is too complicated to try and spoof the timer to do the correct cp% checking logic
-            // therefore cp% related invalid checks are skipped
-            // TODO: Hijack the cp% related invalid type and run my own cp% reversed invalid check
-            static bool RemoveCpInvalid(ref InvalidType type)
-            {
-                if (!enabledCPR) return true;
-
-                return !(type == InvalidType.MissedCheckpoint);
-            }
+            // removed plcc timer's MissedCheckpoint warning, instead implement my own
+            static bool RemoveCpInvalid(ref InvalidType type) => !enabledCPR || type != InvalidType.MissedCheckpoint;
         }
 
-        public void OnDestroy() => harmony.UnpatchSelf();
-
-        static bool enabledCPR = true;
+        public static bool enabledCPR = true;
+        static bool cpMissed;
         static readonly bool timerLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.plcc.hff.timer");
     }
 }
