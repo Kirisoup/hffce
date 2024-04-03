@@ -97,7 +97,11 @@ namespace cprev
         public static void CPValidation(int prevcp, int? newcp = null)
         {
             // validation on finished level
-            if (newcp is null && prevcp != 1) goto invalid;
+            if (newcp is null)
+            {
+                if (prevcp == 1) return;
+                goto invalid;
+            }
 
             WorkshopItemSource lvltype = Game.instance.currentLevelType;
             int lvlnum = Game.instance.currentLevelNumber;
