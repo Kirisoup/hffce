@@ -27,6 +27,8 @@ namespace cprev
 
         void OnGUI()
         {
+            if (!enabledCPR || !shouldWarnInvalid) return;
+
             if (!cpMissed) return;
 
             if (timerLoaded && Timer.Timer.timerOpened) { if(!Speedrun.invalid) TimerInvalidWarning("Missed Checkpoint"); }
@@ -147,6 +149,7 @@ namespace cprev
         }
 
         public static bool enabledCPR = true;
+        public static bool shouldWarnInvalid = true;
         static bool cpMissed;
         static readonly bool timerLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.plcc.hff.timer");
     }
