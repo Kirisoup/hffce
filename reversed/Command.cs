@@ -2,8 +2,11 @@ using System;
 using BepInEx;
 using Timer;
 using System.Reflection;
+using HumanAPI;
+using UnityEngine;
+using Human_Mod;
 
-namespace oobpercent
+namespace reversed
 {
     public partial class Plugin
     {
@@ -12,12 +15,17 @@ namespace oobpercent
             public static void RegCmds()
             {
                 // Hot toggle oob% on/off
-                Soup.Regcmds.ToShell("oobmode", "oob", new Action<string>(Toggler), 
-                    "Setting oob% mode on/off", 
+                Soup.Regcmds.ToShell("reversedmode", "rev", new Action<string>(Toggler), 
+                    "Setting reversed% mode on/off", 
                     "<on(1), off(0), toggle(t), query(q)>");
 
-                /*DEBUG*/if (__()) Soup.Regcmds.ToShell("_find", "", new Action(OOB.InitLevelInfo));
-                /*DEBUG*/if (__()) Soup.Regcmds.ToShell("_human", "", new Action(OOB.InitPlayerInfo));
+                Soup.Regcmds.ToShell("rt", "", new Action(PlayerRt));
+
+            }
+
+            static void objdb()
+            {
+                print(Instantiate<GameObject>(Human_Mod.Main.selected));
             }
 
             // Helper method (only used in Toggler())
@@ -25,7 +33,7 @@ namespace oobpercent
             {
                 if (badSyntax)
                 print("Command syntax error" + (error.IsNullOrWhiteSpace() ? null : ": " + error) + newline +
-                    helpClr + Soup.Regcmds.description_["oobmode"] + "</color>"
+                    helpClr + Soup.Regcmds.description_["reversed"] + "</color>"
                 );
 
                 return badSyntax;
@@ -54,20 +62,20 @@ namespace oobpercent
 
             if (Cmds.SyntaxError("Too many parameters", vals.Length != 1)) return;
 
-            bool oldToggleState = enabledOOB;
+            bool oldToggleState = enabledRev;
 
             switch (vals[0])
             {
                 case "on": case "1":
-                    enabledOOB = true;
+                    enabledRev = true;
                     break;
 
                 case "off": case "0":
-                    enabledOOB = false;
+                    enabledRev = false;
                     break;
 
                 case "toggle": case "t":
-                    enabledOOB = !enabledOOB;
+                    enabledRev = !enabledRev;
                     break;
 
                 case "query": case "q":
@@ -78,13 +86,10 @@ namespace oobpercent
                     return;
             }
 
-            bool changed = enabledOOB != oldToggleState;
-
-            // mark run as cheated if enabledOOB is changed
-            if (changed) isCheated = true;
+            bool changed = enabledRev != oldToggleState;
             
-            print($"{helpClr}oob% mode:</color> " + 
-                (enabledOOB ? "on" : "off") + // on/off state
+            print($"{helpClr}reversed% mode:</color> " + 
+                (enabledRev ? "on" : "off") + // on/off state
                 (changed ? " <#ff0088>(Changed!)</color>" : null)); // If toggle state is changed, show a magenta "(Changed)" string after the on/off state
         }
     }
