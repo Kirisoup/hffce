@@ -20,6 +20,8 @@ namespace reversed
         {
             harmony = Harmony.CreateAndPatchAll(typeof(Rev), "com.kirisoup.hff.reversed");
 
+            harmony.PatchAll(typeof(Rev.MakeClimb));
+
             Cmds.RegCmds();
         }
 
@@ -77,21 +79,13 @@ namespace reversed
 
                     print($"d {h} vy {vy} desiredVy {desiredVy} vy < desiredVy {vy < desiredVy} acc {acc}");
 
-                    if (vy < desiredVy)
+                    if (vy + acc < desiredVy)
 
                     foreach (Rigidbody rigidbody in player.human.rigidbodies)
                         rigidbody.velocity += new Vector3(0, acc, 0);
  
                 }
-
-
-
-
-
             }
-
-
-            
         }
 
         static void ThrowPlayer(string input = null)
@@ -196,6 +190,7 @@ namespace reversed
                 if (!enabledRev) return;
                 if (!executingSpawnAt) return;
                 if (Game.instance.currentCheckpointNumber != 0) return;
+                if (Game.instance.currentLevelNumber == -1) return;
 
                 redrock = lvltype == WorkshopItemSource.EditorPick && lvlnum == 7;
 
@@ -220,6 +215,39 @@ namespace reversed
                 rigidbody.velocity += new Vector3(0, vcap - vori, 0);
 
                 print($"Human.instance.velocity {Human.instance.velocity}");
+            }
+
+            [HarmonyPatch(typeof(Human), "FixedUpdate")]
+            public static class MakeClimb
+            {
+                static bool justSpawed;
+                static bool keepGrabbing;
+
+                static void Prefix()
+                {
+                    if (Game.instance.currentCheckpointNumber != 0) return;
+
+                    print($"justSpawed {justSpawed} keepGrabbing {keepGrabbing}");
+
+                    if (Human.instance.state == HumanState.Spawning) justSpawed = true;
+                }
+
+                static void Postfix()
+                {
+                    if (Game.instance.currentCheckpointNumber != 0) return;
+
+                    if (!justSpawed && !keepGrabbing) return;
+
+                    if (Human.instance.hasGrabbed) keepGrabbing = false;
+
+                    if (Human.instance.state == HumanState.Spawning || Human.instance.state == HumanState.Unconscious) return;
+
+                    justSpawed = false;
+                    if (!Human.instance.hasGrabbed) keepGrabbing = true;
+
+                    if (keepGrabbing) Human.instance.state = HumanState.Climb;
+                }
+
             }
         }
 
