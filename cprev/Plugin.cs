@@ -18,6 +18,8 @@ namespace cprev
         {
             harmony = Harmony.CreateAndPatchAll(typeof(CpRev), "com.kirisoup.hff.cprev");
 
+            if (onlyCoreModding) return;
+
             if (timerLoaded) harmony.PatchAll(typeof(TimerInteg));
 
             Cmds.RegCmds();
@@ -27,7 +29,7 @@ namespace cprev
 
         void OnGUI()
         {
-            if (!enabledCPR || !shouldWarnInvalid) return;
+            if (!enabledCPR || onlyCoreModding) return;
 
             if (!cpMissed) return;
 
@@ -149,7 +151,7 @@ namespace cprev
         }
 
         public static bool enabledCPR = true;
-        public static bool shouldWarnInvalid = true;
+        public static bool onlyCoreModding = false;
         static bool cpMissed;
         static readonly bool timerLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.plcc.hff.timer");
     }

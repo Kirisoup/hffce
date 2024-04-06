@@ -19,7 +19,8 @@ namespace reversed
                     "Setting reversed% mode on/off", 
                     "<on(1), off(0), toggle(t), query(q)>");
 
-                Soup.Regcmds.ToShell("rt", "", new Action(PlayerRt));
+                Soup.Regcmds.ToShell("throw", "", new Action<string>(ThrowPlayer));
+
 
             }
 
@@ -33,7 +34,7 @@ namespace reversed
             {
                 if (badSyntax)
                 print("Command syntax error" + (error.IsNullOrWhiteSpace() ? null : ": " + error) + newline +
-                    helpClr + Soup.Regcmds.description_["reversed"] + "</color>"
+                    helpClr + Soup.Regcmds.description_["reversedmode"] + "</color>"
                 );
 
                 return badSyntax;
@@ -79,6 +80,11 @@ namespace reversed
                     break;
 
                 case "query": case "q":
+                    break;
+
+                case "alwaysSpawnInside": case "asi":
+                    alwaysSpawnInside = !alwaysSpawnInside;
+                    print($"{helpClr}reversed% alwaysSpawnInside:</color> " + alwaysSpawnInside + " <#ff0088>(Changed!)</color>");
                     break;
 
                 default:
