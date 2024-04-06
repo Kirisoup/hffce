@@ -331,19 +331,19 @@ namespace reversed
 
             bool overlappedBellow = hit is not null;
 
-            foreach (Collider collider in colliders)
-            {
-                if (!collider.enabled) continue;
+            // foreach (Collider collider in colliders)
+            // {
+            //     if (!collider.enabled) continue;
                 
-                collider.isTrigger = false;
+            //     collider.isTrigger = false;
 
-                // if (overlappedBellow)
-                // collider.enabled=false;
+            //     // if (overlappedBellow)
+            //     // collider.enabled=false;
                 
-                // Bounds bounds = collider.bounds;
+            //     // Bounds bounds = collider.bounds;
 
-                // collider.transform.localScale = new Vector3(bounds.size.x + uniRadius, bounds.size.y + uniRadius, bounds.size.z + uniRadius);
-            }
+            //     // collider.transform.localScale = new Vector3(bounds.size.x + uniRadius, bounds.size.y + uniRadius, bounds.size.z + uniRadius);
+            // }
         }
 
         static void ReverseSpawn(Vector3 finpos, float finhight)
