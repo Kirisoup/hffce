@@ -238,7 +238,7 @@ namespace reversed
 
                     if (!justSpawed && !keepGrabbing) return;
 
-                    if (Human.instance.hasGrabbed) keepGrabbing = false;
+                    if (Human.instance.hasGrabbed || Human.instance.onGround) keepGrabbing = false;
 
                     if (Human.instance.state == HumanState.Spawning || Human.instance.state == HumanState.Unconscious) return;
 
