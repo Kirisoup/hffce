@@ -1,7 +1,5 @@
 using System;
 using BepInEx;
-using Timer;
-using System.Reflection;
 
 namespace cprev
 {
