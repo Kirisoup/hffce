@@ -137,7 +137,7 @@ namespace cprev
                 }
 
                 public static bool enabledCPR = true;
-                public static bool qolFeatures = false;
+                public static bool qolFeatures = true;
                 static bool missedCp;
                 static readonly bool timerLoaded = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.plcc.hff.timer");
         }
