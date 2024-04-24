@@ -73,12 +73,9 @@ namespace cprev
                         return true;
                 }
 
+                // validate if checkpoints are skipped when finished a level 
                 [HarmonyPatch(typeof(Game), "Fall"), HarmonyPrefix]
-                static void PassValidate()
-                {
-                        // validate if checkpoints are skipped when finished a level
-                        if (Game.instance.passedLevel) missedCp = CheckInvalid(Game.instance.currentCheckpointNumber);
-                }
+                static void PassValidate() => missedCp = Game.instance.passedLevel && CheckInvalid(Game.instance.currentCheckpointNumber);
 
                 // reset cpMissed state after exiting to menu (singleplayer)
                 [HarmonyPatch(typeof(Game), "AfterUnload"), HarmonyPostfix]
