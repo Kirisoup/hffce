@@ -23,7 +23,7 @@ namespace cprev
                         // for it to be used as a dependency of other plugins
                         if (!qolFeatures) return;
 
-                        Cmds.RegCmds();
+                        Commands.RegCmds();
 
                         if (timerLoaded) harmony.PatchAll(typeof(TimerInteg));
                 }
